@@ -53,4 +53,4 @@ end
 $CFLAGS = ' -g -Wall ' + $CFLAGS
 
 create_header()
-create_makefile('net/geoip')
+create_makefile(File.expand_path(File.dirname(__FILE__) + '../lib/net/geoip'))
