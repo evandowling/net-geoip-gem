@@ -2,6 +2,7 @@
 
 #include "ruby_geoip.h"
 #include "GeoIP.h"
+#include "GeoIPCity.h"
 #include "GeoIPUpdate.h"
 
 VALUE ruby_net_geoip_country_code_by_addr(VALUE self, VALUE addr) {
@@ -10,7 +11,7 @@ VALUE ruby_net_geoip_country_code_by_addr(VALUE self, VALUE addr) {
 
   Check_Type(addr, T_STRING);
   Data_Get_Struct(self, ruby_net_geoip, rng);
-  cc = (char *)GeoIP_country_code_by_addr(rng->g, STR2CSTR(addr));
+  cc = (char *)GeoIP_country_code_by_addr(rng->g, StringValuePtr(addr));
   if (cc == NULL) {
     return(Qnil);
   } else {
@@ -25,7 +26,7 @@ VALUE ruby_net_geoip_country_code3_by_addr(VALUE self, VALUE addr) {
 
   Check_Type(addr, T_STRING);
   Data_Get_Struct(self, ruby_net_geoip, rng);
-  cc = (char *)GeoIP_country_code3_by_addr(rng->g, STR2CSTR(addr));
+  cc = (char *)GeoIP_country_code3_by_addr(rng->g, StringValuePtr(addr));
   if (cc == NULL) {
     return(Qnil);
   } else {
@@ -40,7 +41,7 @@ VALUE ruby_net_geoip_country_code_by_name(VALUE self, VALUE name) {
 
   Check_Type(name, T_STRING);
   Data_Get_Struct(self, ruby_net_geoip, rng);
-  cc = (char *)GeoIP_country_code_by_name(rng->g, STR2CSTR(name));
+  cc = (char *)GeoIP_country_code_by_name(rng->g, StringValuePtr(name));
   if (cc == NULL) {
     return(Qnil);
   } else {
@@ -55,7 +56,7 @@ VALUE ruby_net_geoip_country_code3_by_name(VALUE self, VALUE name) {
 
   Check_Type(name, T_STRING);
   Data_Get_Struct(self, ruby_net_geoip, rng);
-  cc = (char *)GeoIP_country_code3_by_name(rng->g, STR2CSTR(name));
+  cc = (char *)GeoIP_country_code3_by_name(rng->g, StringValuePtr(name));
   if (cc == NULL) {
     return(Qnil);
   } else {
@@ -68,7 +69,7 @@ VALUE ruby_net_geoip_country_id_by_addr(VALUE self, VALUE addr) {
   ruby_net_geoip *rng;
   Check_Type(addr, T_STRING);
   Data_Get_Struct(self, ruby_net_geoip, rng);
-  return(INT2NUM(GeoIP_country_id_by_addr(rng->g, STR2CSTR(addr))));
+  return(INT2NUM(GeoIP_country_id_by_addr(rng->g, StringValuePtr(addr))));
 }
 
 
@@ -76,7 +77,7 @@ VALUE ruby_net_geoip_country_id_by_name(VALUE self, VALUE name) {
   ruby_net_geoip *rng;
   Check_Type(name, T_STRING);
   Data_Get_Struct(self, ruby_net_geoip, rng);
-  return(INT2NUM(GeoIP_country_id_by_name(rng->g, STR2CSTR(name))));
+  return(INT2NUM(GeoIP_country_id_by_name(rng->g, StringValuePtr(name))));
 }
 
 
@@ -86,7 +87,7 @@ VALUE ruby_net_geoip_country_name_by_addr(VALUE self, VALUE addr) {
 
   Check_Type(addr, T_STRING);
   Data_Get_Struct(self, ruby_net_geoip, rng);
-  cn = (char *)GeoIP_country_name_by_addr(rng->g, STR2CSTR(addr));
+  cn = (char *)GeoIP_country_name_by_addr(rng->g, StringValuePtr(addr));
   if (cn == NULL) {
     return(Qnil);
   } else {
@@ -101,7 +102,7 @@ VALUE ruby_net_geoip_country_name_by_name(VALUE self, VALUE name) {
 
   Check_Type(name, T_STRING);
   Data_Get_Struct(self, ruby_net_geoip, rng);
-  cn = (char *)GeoIP_country_name_by_name(rng->g, STR2CSTR(name));
+  cn = (char *)GeoIP_country_name_by_name(rng->g, StringValuePtr(name));
   if (cn == NULL) {
     return(Qnil);
   } else {
@@ -182,7 +183,7 @@ VALUE ruby_net_geoip_open(int argc, VALUE *argv, VALUE class) {
     rb_raise(rb_eArgError, "wrong number of arguments (needs 0 or 1)");
   }
   rng = ALLOC(ruby_net_geoip);
-  rng->g = GeoIP_open(STR2CSTR(filename), db_type);
+  rng->g = GeoIP_open(StringValuePtr(filename), db_type);
 
   return(Data_Wrap_Struct(class, 0, ruby_net_geoip_free, rng));
 }
@@ -202,7 +203,7 @@ VALUE ruby_net_geoip_region_by_addr(VALUE self, VALUE addr) {
 
   Check_Type(addr, T_STRING);
   Data_Get_Struct(self, ruby_net_geoip, rng);
-  r = GeoIP_region_by_addr(rng->g, STR2CSTR(addr));
+  r = GeoIP_region_by_addr(rng->g, StringValuePtr(addr));
   if (r == NULL)
     return(Qnil);
 
@@ -219,13 +220,36 @@ VALUE ruby_net_geoip_region_by_name(VALUE self, VALUE name) {
 
   Check_Type(name, T_STRING);
   Data_Get_Struct(self, ruby_net_geoip, rng);
-  r = GeoIP_region_by_name(rng->g, STR2CSTR(name));
+  r = GeoIP_region_by_name(rng->g, StringValuePtr(name));
   if (r == NULL)
     return(Qnil);
 
   reg = rb_str_new2(r->region);
   GeoIPRegion_delete(r);
   return(reg);
+}
+
+VALUE ruby_net_geoip_record_by_addr(VALUE self, VALUE addr) {
+  ruby_net_geoip *rng;
+  GeoIPRecord *gir;
+  VALUE retval;
+
+  Check_Type(addr, T_STRING);
+  Data_Get_Struct(self, ruby_net_geoip, rng);
+  gir = GeoIP_record_by_addr(rng->g, StringValuePtr(addr));
+  if (gir == NULL)
+    return(Qnil);
+
+  retval = rb_ary_new2(5);
+  rb_ary_push(retval, rb_str_new2(gir->city ? gir->city : ""));
+  rb_ary_push(retval, rb_str_new2(gir->region ? gir->region : ""));
+  rb_ary_push(retval, rb_float_new(gir->latitude));
+  rb_ary_push(retval, rb_float_new(gir->longitude));
+  rb_ary_push(retval, rb_str_new2(gir->country_code ? gir->country_code : ""));
+  rb_ary_push(retval, rb_str_new2(gir->country_name ? gir->country_name : ""));
+
+  GeoIPRecord_delete(gir);
+  return(retval);
 }
 
 
@@ -253,7 +277,7 @@ VALUE ruby_net_geoip_update_database(int argc, VALUE *argv, VALUE class) {
     rb_raise(rb_eArgError, "wrong number of arguments (need 1 or 2)");
   }
 
-  ret = GeoIP_update_database(STR2CSTR(key), debug, NULL);
+  ret = GeoIP_update_database(StringValuePtr(key), debug, NULL);
 
   switch (ret) {
   case 0:           /* Success, database updated */
@@ -261,7 +285,7 @@ VALUE ruby_net_geoip_update_database(int argc, VALUE *argv, VALUE class) {
   case 1:           /* Database up-to-date, no action taken */
     return(Qfalse);
   case -1:
-    rb_raise(eNetGeoIPError, "Invalid License Key in %s", STR2CSTR(key));
+    rb_raise(eNetGeoIPError, "Invalid License Key in %s", StringValuePtr(key));
   case -11:
     rb_raise(eNetGeoIPError, "Unable to resolve hostname");
   case -12:
@@ -323,4 +347,6 @@ void Init_geoip(void) {
 		   ruby_net_geoip_region_by_addr, 1);
   rb_define_method(cNetGeoIP, "region_by_name",
 		   ruby_net_geoip_region_by_name, 1);
+  rb_define_method(cNetGeoIP, "record_by_addr",
+		   ruby_net_geoip_record_by_addr, 1);
 }
